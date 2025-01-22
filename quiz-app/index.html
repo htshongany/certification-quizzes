@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen w-full">
+    <!-- La partie HTML reste identique jusqu'au script -->
     <div class="h-screen w-full p-4 md:p-6 lg:p-8 flex items-center justify-center">
         <div class="w-full max-w-6xl bg-white rounded-xl shadow-sm p-4 md:p-6 lg:p-8">
             <div class="flex justify-between items-center mb-4 md:mb-6">
@@ -56,6 +57,9 @@
         let currentQuestionIndex = 0;
         let correctAnswers = 0;
         let incorrectAnswers = 0;
+        let failedQuestions = [];
+        let reviewMode = false;
+        let reviewIndex = 0;
 
         // Éléments du DOM
         const questionEl = document.getElementById('question');
@@ -78,11 +82,7 @@
                             const jsonData = JSON.parse(event.target.result);
                             if (Array.isArray(jsonData) && jsonData.length > 0) {
                                 questions = jsonData;
-                                currentQuestionIndex = 0;
-                                correctAnswers = 0;
-                                incorrectAnswers = 0;
-                                updateProgressBar();
-                                loadQuestion();
+                                resetQuiz();
                                 errorMessageEl.classList.add('hidden');
                             } else {
                                 showError('Invalid JSON format: Expected a non-empty array of questions.');
@@ -142,6 +142,11 @@
                 correctAnswers++;
             } else {
                 incorrectAnswers++;
+                failedQuestions.push({
+                    question: currentQuestion,
+                    userAnswer: selectedOptions,
+                    index: currentQuestionIndex
+                });
             }
 
             updateProgressBar();
@@ -161,6 +166,14 @@
         function showFinalScore() {
             const percentage = (correctAnswers / questions.length) * 100;
             questionEl.textContent = "Quiz Completed!";
+            
+            const reviewButton = failedQuestions.length > 0 ? `
+                <button id="review-btn" 
+                        class="mt-4 px-4 md:px-6 py-2 md:py-3 bg-yellow-500 text-white text-sm md:text-base rounded-lg hover:bg-yellow-600 transition-colors duration-200">
+                    Review Failed Questions (${failedQuestions.length})
+                </button>
+            ` : '';
+
             optionsEl.innerHTML = `
                 <div class="text-center p-4 space-y-3 md:space-y-4">
                     <p class="text-lg md:text-xl lg:text-2xl text-gray-700">
@@ -172,20 +185,111 @@
                     <p class="text-sm md:text-base text-gray-500">
                         Would you like to try again to improve your score?
                     </p>
+                    ${reviewButton}
                 </div>
             `;
+
             nextBtn.classList.add('hidden');
             continueBtn.classList.remove('hidden');
+
+            const reviewBtn = document.getElementById('review-btn');
+            if (reviewBtn) {
+                reviewBtn.addEventListener('click', startReview);
+            }
+        }
+
+        function startReview() {
+            reviewMode = true;
+            reviewIndex = 0;
+            showReviewQuestion();
+            continueBtn.textContent = 'Back to Summary';
+        }
+
+        function showReviewQuestion() {
+            const failedQuestion = failedQuestions[reviewIndex];
+            const question = failedQuestion.question;
+            
+            questionEl.textContent = `Failed Question ${reviewIndex + 1}/${failedQuestions.length}`;
+            
+            optionsEl.innerHTML = `
+                <div class="space-y-4">
+                    <p class="text-lg md:text-xl text-gray-700">${question.question}</p>
+                    <div class="space-y-2">
+                        ${question.options.map((option, index) => {
+                            const isCorrect = Array.isArray(question.answer) ? 
+                                question.answer.includes(index) : 
+                                question.answer === index;
+                            const wasSelected = failedQuestion.userAnswer.includes(index);
+                            
+                            return `
+                                <div class="p-3 rounded-lg ${
+                                    isCorrect ? 'bg-green-100 border-2 border-green-500' :
+                                    wasSelected ? 'bg-red-100 border-2 border-red-500' :
+                                    'bg-gray-50 border-2 border-gray-200'
+                                }">
+                                    <p class="text-sm md:text-base">
+                                        ${option}
+                                        ${isCorrect ? ' ✓' : wasSelected ? ' ✗' : ''}
+                                    </p>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            const navigationButtons = `
+                <div class="flex justify-between mt-4">
+                    ${reviewIndex > 0 ? `
+                        <button id="prev-review" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                            Previous
+                        </button>
+                    ` : '<div></div>'}
+                    ${reviewIndex < failedQuestions.length - 1 ? `
+                        <button id="next-review" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                            Next
+                        </button>
+                    ` : '<div></div>'}
+                </div>
+            `;
+
+            optionsEl.insertAdjacentHTML('beforeend', navigationButtons);
+
+            const prevBtn = document.getElementById('prev-review');
+            const nextBtn = document.getElementById('next-review');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    reviewIndex--;
+                    showReviewQuestion();
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    reviewIndex++;
+                    showReviewQuestion();
+                });
+            }
         }
 
         function resetQuiz() {
+            if (reviewMode) {
+                reviewMode = false;
+                showFinalScore();
+                return;
+            }
+            
             currentQuestionIndex = 0;
             correctAnswers = 0;
             incorrectAnswers = 0;
+            failedQuestions = [];
+            reviewMode = false;
             updateProgressBar();
             loadQuestion();
             continueBtn.classList.add('hidden');
             nextBtn.classList.remove('hidden');
+            continueBtn.textContent = 'Try Again';
         }
 
         function showError(message) {
