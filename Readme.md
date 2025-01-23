@@ -21,8 +21,8 @@ All quizzes should follow the JSON format outlined here: [json file](quiz-json/m
 
 1. **Add quizzes**: Submit your own quizzes in JSON format via a pull request.
 2. **Share files**: We encourage the community to share their JSON quiz files to expand the repository.
-3. **Test with the app**: Use the simple HTML/JS application to simulate your quizzes.
+3. **Test with the app**: Use the simple HTML/JS application to simulate your quizzes. [Launch the app](quiz-app/index.html)
 
-## Acknowledgments
+## Credit
 
 - The **Cloud-Practitioner-exam** quiz is based on the [AWS Certified Cloud Practitioner Notes](https://github.com/kananinirav/AWS-Certified-Cloud-Practitioner-Notes).
