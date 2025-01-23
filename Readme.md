@@ -21,7 +21,7 @@ All quizzes should follow the JSON format outlined here: [json file](quiz-json/m
 
 1. **Add quizzes**: Submit your own quizzes in JSON format via a pull request.
 2. **Share files**: We encourage the community to share their JSON quiz files to expand the repository.
-3. **Test with the app**: Use the simple HTML/JS application to simulate your quizzes. [Launch the app](quiz-app/index.html)
+3. **Test with the app**: Use the simple HTML/JS application to simulate your quizzes. [Launch the app](https://htshongany.github.io/certification-quizzes/quiz-app/index.html)
 
 ## Credit
 
