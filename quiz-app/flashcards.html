@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <nav class="bg-white shadow-sm p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <img src="images/sirehassan.png" alt="Logo" class="h-10 w-10 mr-2">
+            <h1 class="text-xl font-semibold text-gray-800">Learning-App</h1>
+        </div>
+        <div class="space-x-4">
+            <a href="index.html" class="text-gray-700 hover:text-blue-500 hover:scale-105 transition-all duration-200">Quiz</a>
+            <a href="flashcards.html" class="text-gray-700 hover:text-blue-500 hover:scale-105 transition-all duration-200">Flash Cards</a>
+        </div>
+    </nav>
+    
+    <div class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8">
+        <div class="w-full max-w-4xl bg-white rounded-xl shadow-xl flex flex-col relative">
+            <!-- Title and Upload Section -->
+            <div class="flex justify-between items-center p-4 md:p-6">
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-800">Flash Cards</h1>
+                <label for="file-input" 
+                       class="w-10 h-10 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 text-white">
+                    <i class="fas fa-plus text-lg"></i>
+                </label>
+                <input type="file" id="file-input" accept=".json" class="hidden">
+            </div>
+    
+            <!-- Progress Bar -->
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden mx-4 md:mx-6">
+                <div id="progress-bar" class="bg-blue-500 transition-all duration-300 h-full" style="width: 0%"></div>
+            </div>
+    
+            <!-- Flashcard Section with Navigation Buttons -->
+            <div class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8 relative">
+                <button id="prev-btn" 
+                        class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-l-full transition-all hidden">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="flashcard" 
+                     class="w-full max-w-4xl h-64 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-center text-gray-700 cursor-pointer">
+                    <span id="flashcard-content" class="text-base md:text-xl lg:text-2xl break-words w-full px-4">
+                        Load a JSON file to start
+                    </span>
+                </div>
+                <button id="next-btn" 
+                        class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-r-full transition-all hidden">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const flashcard = document.getElementById("flashcard");
+            const flashcardContent = document.getElementById("flashcard-content");
+            const prevBtn = document.getElementById("prev-btn");
+            const nextBtn = document.getElementById("next-btn");
+            const fileInput = document.getElementById("file-input");
+            const progressBar = document.getElementById("progress-bar");
+
+            let cards = [];
+            let currentCardIndex = 0;
+            let showingAnswer = false;
+
+            function updateProgressBar() {
+                if (cards.length > 0) {
+                    const progress = ((currentCardIndex + 1) / cards.length) * 100;
+                    progressBar.style.width = `${progress}%`;
+                }
+            }
+
+            function updateNavigationButtons() {
+                prevBtn.classList.toggle('hidden', cards.length <= 1 || currentCardIndex === 0);
+                nextBtn.classList.toggle('hidden', cards.length <= 1 || currentCardIndex === cards.length - 1);
+            }
+
+            function displayCard(index) {
+                if (cards.length > 0) {
+                    flashcardContent.textContent = cards[index].question;
+                    updateProgressBar();
+                    updateNavigationButtons();
+                } else {
+                    flashcardContent.textContent = "Load a JSON file to start";
+                    prevBtn.classList.add('hidden');
+                    nextBtn.classList.add('hidden');
+                }
+                showingAnswer = false;
+            }
+
+            function toggleFlashcard() {
+                if (cards.length === 0) return;
+
+                const currentCard = cards[currentCardIndex];
+                if (showingAnswer) {
+                    flashcardContent.textContent = currentCard.question;
+                    showingAnswer = false;
+                } else {
+                    if (Array.isArray(currentCard.answer)) {
+                        flashcardContent.innerHTML = currentCard.answer.map(answer => {
+                            return `<div>${currentCard.options[answer]}</div><hr class="my-2 border-gray-300">`;
+                        }).join('');
+                    } else {
+                        flashcardContent.textContent = currentCard.options[currentCard.answer];
+                    }
+                    showingAnswer = true;
+                }
+            }
+
+            flashcard.addEventListener("click", toggleFlashcard);
+
+            prevBtn.addEventListener("click", () => {
+                if (currentCardIndex > 0) {
+                    currentCardIndex--;
+                    displayCard(currentCardIndex);
+                }
+            });
+
+            nextBtn.addEventListener("click", () => {
+                if (currentCardIndex < cards.length - 1) {
+                    currentCardIndex++;
+                    displayCard(currentCardIndex);
+                }
+            });
+
+            fileInput.addEventListener("change", (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    if (file.type === "application/json" || file.name.endsWith(".json")) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            try {
+                                const jsonData = JSON.parse(event.target.result);
+                                if (Array.isArray(jsonData) && jsonData.length > 0) {
+                                    cards = jsonData;
+                                    currentCardIndex = 0;
+                                    displayCard(currentCardIndex);
+                                    nextBtn.classList.remove('hidden');
+                                } else {
+                                    alert("Invalid JSON format: Expected a non-empty array of questions.");
+                                }
+                            } catch (error) {
+                                alert("Error parsing JSON file: " + error.message);
+                            }
+                        };
+                        reader.onerror = function() {
+                            alert("Error reading file");
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        alert("Please upload a JSON file");
+                    }
+                }
+            });
+
+            displayCard(currentCardIndex);
+        });
+    </script>
+</body>
+</html>
