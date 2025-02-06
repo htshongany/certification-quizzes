@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash Cards</title>
+    <title>Flashcards</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation Bar -->
     <nav class="bg-white shadow-md px-4 py-3 flex items-center justify-between fixed w-full top-0 z-50">
         <div class="flex items-center space-x-3">
             <img src="images/sirehassan.png" alt="Logo" class="h-9 w-9">
@@ -18,7 +19,8 @@
             <a href="flashcards.html" class="text-blue-500 font-medium hover:text-blue-600 transition-colors">Flash Cards</a>
         </div>
     </nav>
-    
+
+    <!-- Main Content -->
     <div class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8">
         <div class="w-full max-w-4xl bg-white rounded-xl shadow-xl flex flex-col relative">
             <!-- Title and Upload Section -->
@@ -30,140 +32,135 @@
                 </label>
                 <input type="file" id="file-input" accept=".json" class="hidden">
             </div>
-    
+
             <!-- Progress Bar -->
             <div class="h-2 bg-gray-100 rounded-full overflow-hidden mx-4 md:mx-6">
                 <div id="progress-bar" class="bg-blue-500 transition-all duration-300 h-full" style="width: 0%"></div>
             </div>
-    
+
             <!-- Flashcard Section with Navigation Buttons -->
             <div class="flex-grow flex items-center justify-center p-4 md:p-6 lg:p-8 relative">
+                <p id="instruction-text" class="text-center text-gray-500 text-lg">Please load a JSON file to start using flashcards.</p>
                 <button id="prev-btn" 
-                        class="absolute -left-6 top-1/2 transform -translate-y-1/2 w-12 h-12 md:w-14 md:h-14 bg-white text-blue-500 rounded-full flex items-center justify-center hidden shadow-lg active:scale-95 transition-transform">
-                    <i class="fas fa-chevron-left text-xl"></i>
+                        class="absolute -left-6 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-white text-blue-500 rounded-full flex items-center justify-center hidden shadow-lg active:scale-95 transition-transform">
+                    <i class="fas fa-chevron-left text-base sm:text-lg"></i>
                 </button>
-
                 <div id="flashcard" 
-                     class="w-full max-w-4xl h-64 flex items-center justify-center bg-white border border-gray-200 rounded-lg text-center text-gray-700 cursor-pointer shadow-md">
-                    <span id="flashcard-content" class="text-base md:text-xl lg:text-2xl break-words w-full px-4">
-                        Load a JSON file to start
-                    </span>
+                     class="w-full max-w-4xl h-auto min-h-[16rem] sm:min-h-[18rem] md:min-h-[20rem] flex flex-col items-center justify-center bg-white border border-gray-200 rounded-lg text-center text-gray-700 cursor-pointer shadow-md p-4 hidden">
+                    <p id="flashcard-question" class="text-sm sm:text-base md:text-xl lg:text-2xl break-words w-full px-4 text-gray-700 font-medium"></p>
+                    <div id="flashcard-options" class="mt-4 space-y-2 w-full"></div>
                 </div>
-
                 <button id="next-btn" 
-                        class="absolute -right-6 top-1/2 transform -translate-y-1/2 w-12 h-12 md:w-14 md:h-14 bg-white text-blue-500 rounded-full flex items-center justify-center hidden shadow-lg active:scale-95 transition-transform">
-                    <i class="fas fa-chevron-right text-xl"></i>
+                        class="absolute -right-6 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-white text-blue-500 rounded-full flex items-center justify-center hidden shadow-lg active:scale-95 transition-transform">
+                    <i class="fas fa-chevron-right text-base sm:text-lg"></i>
                 </button>
             </div>
         </div>
     </div>
-    
-    
+
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const flashcard = document.getElementById("flashcard");
-            const flashcardContent = document.getElementById("flashcard-content");
-            const prevBtn = document.getElementById("prev-btn");
-            const nextBtn = document.getElementById("next-btn");
-            const fileInput = document.getElementById("file-input");
-            const progressBar = document.getElementById("progress-bar");
+        let flashcards = [];
+        let currentFlashcardIndex = 0;
+        let showAnswer = false;
 
-            let cards = [];
-            let currentCardIndex = 0;
-            let showingAnswer = false;
+        const questionEl = document.getElementById('flashcard-question');
+        const optionsEl = document.getElementById('flashcard-options');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const instructionText = document.getElementById('instruction-text');
+        const flashcardEl = document.getElementById('flashcard');
 
-            function updateProgressBar() {
-                if (cards.length > 0) {
-                    const progress = ((currentCardIndex + 1) / cards.length) * 100;
-                    progressBar.style.width = `${progress}%`;
-                }
-            }
+        function loadFlashcard() {
+            const flashcard = flashcards[currentFlashcardIndex];
+            questionEl.textContent = flashcard.question;
+            optionsEl.innerHTML = '';
 
-            function updateNavigationButtons() {
-                prevBtn.classList.toggle('hidden', cards.length <= 1 || currentCardIndex === 0);
-                nextBtn.classList.toggle('hidden', cards.length <= 1 || currentCardIndex === cards.length - 1);
-            }
+            flashcard.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'relative';
 
-            function displayCard(index) {
-                if (cards.length > 0) {
-                    flashcardContent.textContent = cards[index].question;
-                    updateProgressBar();
-                    updateNavigationButtons();
-                } else {
-                    flashcardContent.textContent = "Load a JSON file to start";
-                    prevBtn.classList.add('hidden');
-                    nextBtn.classList.add('hidden');
-                }
-                showingAnswer = false;
-            }
-
-            function toggleFlashcard() {
-                if (cards.length === 0) return;
-
-                const currentCard = cards[currentCardIndex];
-                if (showingAnswer) {
-                    flashcardContent.textContent = currentCard.question;
-                    showingAnswer = false;
-                } else {
-                    if (Array.isArray(currentCard.answer)) {
-                        flashcardContent.innerHTML = currentCard.answer.map(answer => {
-                            return `<div>${currentCard.options[answer]}</div><hr class="my-2 border-gray-300">`;
-                        }).join('');
+                let colorClass = 'bg-gray-50 border-gray-200';
+                let symbol = '';
+                if (showAnswer) {
+                    if (Array.isArray(flashcard.answer) ? flashcard.answer.includes(index) : flashcard.answer === index) {
+                        colorClass = 'bg-green-100 border-green-500';
+                        symbol = ' ✓';
                     } else {
-                        flashcardContent.textContent = currentCard.options[currentCard.answer];
-                    }
-                    showingAnswer = true;
-                }
-            }
-
-            flashcard.addEventListener("click", toggleFlashcard);
-
-            prevBtn.addEventListener("click", () => {
-                if (currentCardIndex > 0) {
-                    currentCardIndex--;
-                    displayCard(currentCardIndex);
-                }
-            });
-
-            nextBtn.addEventListener("click", () => {
-                if (currentCardIndex < cards.length - 1) {
-                    currentCardIndex++;
-                    displayCard(currentCardIndex);
-                }
-            });
-
-            fileInput.addEventListener("change", (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    if (file.type === "application/json" || file.name.endsWith(".json")) {
-                        const reader = new FileReader();
-                        reader.onload = function(event) {
-                            try {
-                                const jsonData = JSON.parse(event.target.result);
-                                if (Array.isArray(jsonData) && jsonData.length > 0) {
-                                    cards = jsonData;
-                                    currentCardIndex = 0;
-                                    displayCard(currentCardIndex);
-                                    nextBtn.classList.remove('hidden');
-                                } else {
-                                    alert("Invalid JSON format: Expected a non-empty array of questions.");
-                                }
-                            } catch (error) {
-                                alert("Error parsing JSON file: " + error.message);
-                            }
-                        };
-                        reader.onerror = function() {
-                            alert("Error reading file");
-                        };
-                        reader.readAsText(file);
-                    } else {
-                        alert("Please upload a JSON file");
+                        colorClass = 'bg-red-100 border-red-500';
+                        symbol = ' ✗';
                     }
                 }
+
+                optionDiv.innerHTML = `
+                    <div class="block p-2 sm:p-3 ${colorClass} border-2 rounded-lg transition-all duration-200
+                                  text-xs sm:text-sm md:text-base lg:text-lg">
+                        ${option}${symbol}
+                    </div>
+                `;
+                optionsEl.appendChild(optionDiv);
             });
 
-            displayCard(currentCardIndex);
+            // Update progress bar
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${((currentFlashcardIndex + 1) / flashcards.length) * 100}%`;
+        }
+
+        function updateButtons() {
+            prevBtn.classList.toggle('hidden', currentFlashcardIndex === 0);
+            nextBtn.classList.toggle('hidden', currentFlashcardIndex === flashcards.length - 1);
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentFlashcardIndex > 0) {
+                currentFlashcardIndex--;
+                showAnswer = false;
+                loadFlashcard();
+                updateButtons();
+            }
         });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentFlashcardIndex < flashcards.length - 1) {
+                currentFlashcardIndex++;
+                showAnswer = false;
+                loadFlashcard();
+                updateButtons();
+            }
+        });
+
+        document.getElementById('flashcard').addEventListener('click', () => {
+            showAnswer = !showAnswer;
+            loadFlashcard();
+        });
+
+        // Load flashcards from a JSON file or a predefined array
+        function loadFlashcardsFromJSON(jsonData) {
+            flashcards = jsonData;
+            currentFlashcardIndex = 0;
+            showAnswer = false;
+            instructionText.classList.add('hidden');
+            flashcardEl.classList.remove('hidden');
+            loadFlashcard();
+            updateButtons();
+        }
+
+        // Handle JSON file upload
+        document.getElementById('file-input').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        loadFlashcardsFromJSON(jsonData);
+                    } catch (error) {
+                        alert('Invalid JSON file format.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
     </script>
 </body>
 </html>
