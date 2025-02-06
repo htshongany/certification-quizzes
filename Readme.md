@@ -4,7 +4,32 @@ Welcome to my GitHub repository dedicated to certification quizzes! Here, you'll
 
 ## Quiz Format
 
-All quizzes should follow the JSON format outlined here: [json file](quiz-json/model.json)
+All quizzes should follow the JSON format outlined here:
+
+```json 
+[
+    {
+        "question": "What color is the sky?",
+        "options": [
+            "Blue",
+            "Green",
+            "Red",
+            "Yellow"
+        ],
+        "answer": 0
+    },
+    {
+        "question": "Which of the following are fruits? (Select all that apply)",
+        "options": [
+            "Apple",
+            "Carrot",
+            "Banana",
+            "Potato"
+        ],
+        "answer": [0, 2]
+    }
+]
+```
 
 ### Format Details:
 
