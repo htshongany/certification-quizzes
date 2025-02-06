@@ -311,7 +311,7 @@
             "Amazon Redshift.",
             "Amazon Kinesis.",
             "Amazon DynamoDB.",
-            " Amazon RDS."
+            "Amazon RDS."
         ],
         "answer": 0
     },
@@ -507,7 +507,8 @@
             "Instances can be shut down by AWS at any time with no notification.",
             "Reserved instances require at least a one-year pricing commitment.",
             "There is no additional charge for using dedicated instances.",
-            "Reserved instances provide a significant discount compared to on-demand instances."
+            "Reserved instances provide a significant discount compared to on-demand instances.",
+            "E.Reserved instances are best suited for periodic workloads."
         ],
         "answer": [
             1,

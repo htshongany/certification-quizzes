@@ -456,7 +456,7 @@
             "They simplify patching and updating underlying OSs.",
             "They do not require the customer to optimize instance type or size selections."
         ],
-        "answer": 0
+        "answer": 2
     },
     {
         "question": "Which services can be used across hybrid AWS Cloud architectures? (Select TWO)",
